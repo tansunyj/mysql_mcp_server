@@ -2,54 +2,70 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/mysql-mcp-server)
 [![smithery badge](https://smithery.ai/badge/mysql-mcp-server)](https://smithery.ai/server/mysql-mcp-server)
 [![MseeP.ai Security Assessment Badge](https://mseep.net/mseep-audited.png)](https://mseep.ai/app/designcomputer-mysql-mcp-server)
-# MySQL MCP Server
-A Model Context Protocol (MCP) implementation that enables secure interaction with MySQL databases. This server component facilitates communication between AI applications (hosts/clients) and MySQL databases, making database exploration and analysis safer and more structured through a controlled interface.
+# MySQL MCP 服务
 
-> **Note**: MySQL MCP Server is not designed to be used as a standalone server, but rather as a communication protocol implementation between AI applications and MySQL databases.
+一个基于模型上下文协议(Model Context Protocol, MCP)的MySQL数据库交互服务。该服务允许AI助手安全地查询和操作MySQL数据库，通过结构化的接口进行数据库探索和分析。
 
-## Features
-- List available MySQL tables as resources
-- Read table contents
-- Execute SQL queries with proper error handling
-- Secure database access through environment variables
-- Comprehensive logging
+## 功能特点
 
-## Installation
-### Manual Installation
+- 列出所有可用的MySQL数据库
+- 查看指定数据库中的所有表
+- 查看表结构
+- 执行SQL查询并返回结果
+- 在表中搜索包含特定关键字的数据
+- 安全的数据库连接配置
+- 详细的日志记录
+
+## 安装
+
+### 通过pip安装
+
 ```bash
 pip install mysql-mcp-server
 ```
 
-### Installing via Smithery
-To install MySQL MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/mysql-mcp-server):
+### 手动安装
+
 ```bash
-npx -y @smithery/cli install mysql-mcp-server --client claude
+# 克隆仓库
+git clone https://github.com/yourusername/mysql-mcp-server.git
+cd mysql-mcp-server
+
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # 或在Windows上使用 venv\Scripts\activate
+
+# 安装依赖
+pip install -r requirements.txt
 ```
 
-## Configuration
-Set the following environment variables:
+## 配置
+
+通过环境变量配置MySQL连接信息：
+
 ```bash
-MYSQL_HOST=localhost     # Database host
-MYSQL_PORT=3306         # Optional: Database port (defaults to 3306 if not specified)
-MYSQL_USER=your_username
-MYSQL_PASSWORD=your_password
-MYSQL_DATABASE=your_database
+MYSQL_HOST=localhost      # 数据库主机地址
+MYSQL_PORT=3306          # 数据库端口（可选，默认为3306）
+MYSQL_USER=your_username  # 数据库用户名
+MYSQL_PASSWORD=your_password  # 数据库密码
+MYSQL_DATABASE=your_database  # 要连接的数据库名
+MYSQL_CHARSET=utf8mb4    # 字符集（可选，默认为utf8mb4）
+MYSQL_COLLATION=utf8mb4_unicode_ci  # 排序规则（可选）
+MYSQL_SQL_MODE=TRADITIONAL  # SQL模式（可选）
 ```
 
-## Usage
-### With Claude Desktop
-Add this to your `claude_desktop_config.json`:
+## 使用方法
+
+### 与Claude Desktop集成
+
+在`claude_desktop_config.json`中添加以下配置：
+
 ```json
 {
   "mcpServers": {
     "mysql": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "path/to/mysql_mcp_server",
-        "run",
-        "mysql_mcp_server"
-      ],
+      "command": "python",
+      "args": ["path/to/mcp_mysql.py"],
       "env": {
         "MYSQL_HOST": "localhost",
         "MYSQL_PORT": "3306",
@@ -62,19 +78,17 @@ Add this to your `claude_desktop_config.json`:
 }
 ```
 
-### With Visual Studio Code
-Add this to your `mcp.json`:
+### 与Visual Studio Code集成
+
+在`~/.cursor/mcp.json`中添加以下配置：
+
 ```json
 {
   "servers": {
-      "mysql": {
-            "type": "stdio",
-            "command": "uvx",
-            "args": [
-                "--from",
-                "mysql-mcp-server",
-                "mysql_mcp_server"
-            ],
+    "mysql": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["path/to/mcp_mysql.py"],
       "env": {
         "MYSQL_HOST": "localhost",
         "MYSQL_PORT": "3306",
@@ -86,63 +100,104 @@ Add this to your `mcp.json`:
   }
 }
 ```
-Note: Will need to install uv for this to work
 
-### Debugging with MCP Inspector
-While MySQL MCP Server isn't intended to be run standalone or directly from the command line with Python, you can use the MCP Inspector to debug it.
-
-The MCP Inspector provides a convenient way to test and debug your MCP implementation:
+### 直接运行（用于测试）
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-# Use the MCP Inspector for debugging (do not run directly with Python)
+# 设置环境变量
+export MYSQL_HOST=localhost
+export MYSQL_USER=root
+export MYSQL_PASSWORD=123456
+export MYSQL_DATABASE=ai_content_db
+
+# 运行服务
+python mcp_mysql.py
 ```
 
-The MySQL MCP Server is designed to be integrated with AI applications like Claude Desktop and should not be run directly as a standalone Python program.
+## 可用工具
 
-## Development
+该MCP服务提供以下工具：
+
+1. **query_mysql** - 执行SQL查询并返回结果
+   - 参数: `sql` (字符串) - 要执行的SQL语句
+
+2. **list_databases** - 查看MySQL服务器上的所有数据库
+   - 无需参数
+
+3. **list_tables** - 查看指定数据库的所有表
+   - 参数: `database` (字符串) - 数据库名
+
+4. **describe_table** - 查看指定表的结构
+   - 参数: `database` (字符串) - 数据库名
+   - 参数: `table` (字符串) - 表名
+
+5. **search_table** - 在指定表的指定字段中搜索包含关键字的数据
+   - 参数: `database` (字符串) - 数据库名
+   - 参数: `table` (字符串) - 表名
+   - 参数: `column` (字符串) - 字段名
+   - 参数: `keyword` (字符串) - 关键字
+   - 参数: `limit` (整数，可选) - 返回条数，默认20
+
+## 示例查询
+
+以下是一些可以通过AI助手使用的示例查询：
+
+1. "列出所有可用的数据库"
+2. "显示数据库 'ai_content_db' 中的所有表"
+3. "描述表 'users' 的结构"
+4. "在 'products' 表的 'name' 列中搜索包含 'phone' 的数据"
+5. "执行SQL查询: SELECT * FROM orders WHERE total > 100 LIMIT 5"
+
+## 安全建议
+
+1. **创建专用数据库用户**：为此服务创建一个具有最小必要权限的专用MySQL用户
+2. **避免使用root账户**：永远不要使用root或管理员账户连接数据库
+3. **限制数据库访问**：只允许必要的操作权限
+4. **启用日志记录**：为了审计目的，确保所有数据库操作都被记录
+5. **定期安全审查**：定期检查数据库访问日志和权限设置
+
+## 创建受限MySQL用户示例
+
+```sql
+-- 创建新用户
+CREATE USER 'mcp_user'@'localhost' IDENTIFIED BY 'secure_password';
+
+-- 只授予SELECT权限（只读访问）
+GRANT SELECT ON your_database.* TO 'mcp_user'@'localhost';
+
+-- 如果需要写入权限，可以有选择地授予
+-- GRANT SELECT, INSERT, UPDATE ON your_database.* TO 'mcp_user'@'localhost';
+
+-- 刷新权限
+FLUSH PRIVILEGES;
+```
+
+## 开发
+
 ```bash
-# Clone the repository
-git clone https://github.com/designcomputer/mysql_mcp_server.git
-cd mysql_mcp_server
-# Create virtual environment
+# 克隆仓库
+git clone https://github.com/yourusername/mysql-mcp-server.git
+cd mysql-mcp-server
+
+# 创建虚拟环境
 python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-# Install development dependencies
+source venv/bin/activate  # 或在Windows上使用 venv\Scripts\activate
+
+# 安装开发依赖
 pip install -r requirements-dev.txt
-# Run tests
+
+# 运行测试
 pytest
 ```
 
-## Security Considerations
-- Never commit environment variables or credentials
-- Use a database user with minimal required permissions
-- Consider implementing query whitelisting for production use
-- Monitor and log all database operations
+## 许可证
 
-## Security Best Practices
-This MCP implementation requires database access to function. For security:
-1. **Create a dedicated MySQL user** with minimal permissions
-2. **Never use root credentials** or administrative accounts
-3. **Restrict database access** to only necessary operations
-4. **Enable logging** for audit purposes
-5. **Regular security reviews** of database access
+MIT许可证 - 详情请参阅LICENSE文件。
 
-See [MySQL Security Configuration Guide](https://github.com/designcomputer/mysql_mcp_server/blob/main/SECURITY.md) for detailed instructions on:
-- Creating a restricted MySQL user
-- Setting appropriate permissions
-- Monitoring database access
-- Security best practices
+## 贡献
 
-⚠️ IMPORTANT: Always follow the principle of least privilege when configuring database access.
-
-## License
-MIT License - see LICENSE file for details.
-
-## Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork本仓库
+2. 创建您的特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交您的更改 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 开启一个Pull Request
